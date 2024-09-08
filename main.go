@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"log"
+	"monkeylsp/lsp"
 	"monkeylsp/rpc"
 	"os"
 )
@@ -16,15 +18,35 @@ func main() {
 	scanner.Split(rpc.Split)
 
 	for scanner.Scan() {
-		msg := scanner.Text()
-		handleMessage(logger, msg)
+		msg := scanner.Bytes()
+		method, contents, err := rpc.DecodeMessage(msg)
+		if err != nil {
+			logger.Printf("Got an error: %s", err)
+		}
+
+		handleMessage(logger, method, contents)
 
 	}
 
 }
 
-func handleMessage(logger *log.Logger, msg any) {
-	logger.Println(msg)
+func handleMessage(logger *log.Logger, method string, contents []byte) {
+	// logger.Println(msg)
+	logger.Println("Recieved msg with method: ", method)
+
+	switch method {
+	case "initialize":
+		var request lsp.InitializeRequest
+		if err := json.Unmarshal(contents, &request); err != nil {
+			logger.Println("Failure to parse.", err)
+			return
+		}
+		logger.Printf("connected to %s %s",
+			request.Params.ClientInfo.Name,
+			request.Params.ClientInfo.Version)
+	default:
+		logger.Println("unhandled method recieved. method=%s", method)
+	}
 }
 
 func getLogger(filename string) *log.Logger {

@@ -43,6 +43,7 @@ func DecodeMessage(msg []byte) (string, []byte, error) {
 
 }
 
+// scanner split function to read one message at a time while doing some basic checking on length
 func Split(data []byte, _ bool) (adavance int, token []byte, err error) {
 	header, content, found := bytes.Cut(data, []byte{'\r', '\n', '\r', '\n'})
 	if !found {
